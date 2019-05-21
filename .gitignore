@@ -1,0 +1,4 @@
+#keeps photos from uploading
+test/
+#ignore generated card list
+cards.txt
