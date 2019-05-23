@@ -53,9 +53,9 @@ while True:
     #crop photo to just card name
     img = Image.open(pic_name)
     print "attempting to crop..."
-    area = (300, 350, 750, 450)
+    area = (325, 515, 700, 600)
     cropped_img = img.crop(area)
-    cropped_img = cropped_img.rotate(rotation_angle)
+    #cropped_img = cropped_img.rotate(rotation_angle)
     cropped_img.save(pic_name)
 
     print "Picture taken! See mtg_{0}.jpg!".format(timestamp)
