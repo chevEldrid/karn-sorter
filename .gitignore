@@ -2,3 +2,4 @@
 test/
 #ignore generated card list
 cards.txt
+prices.txt

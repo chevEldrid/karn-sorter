@@ -36,10 +36,18 @@ def setup():
     GPIO.setwarnings(False)
     GPIO.setup(servoPin, GPIO.OUT)
 
+#given picture name, crops it to just include name of card
+def crop_picture(pic_name):
+    img = Image.open(pic_name)
+    area = (325, 515, 700, 600)
+    cropped_img = img.crop(area)
+    #cropped_img = cropped_img.rotate(rotation_angle)
+    cropped_img.save(pic_name)
+
 #given picture name, uploads to S3 and runs against rekognition
 def get_name(filename):
     s3.Bucket(BUCKET).upload_file(filename, filename)
-    print filename + "successfully uploaded to S3"
+    print filename + " successfully uploaded to S3"
     client = boto3.client('rekognition')
     response = client.detect_text(Image={'S3Object':{'Bucket':BUCKET, 'Name':filename}})
     textDetections=response['TextDetections']
@@ -69,14 +77,14 @@ def get_price(card):
         r = requests.get("https://api.scryfall.com/cards/search", params=url_params)
         x = json.loads(r.text)
         price = cheapestPrint(x)
-        print card + ":$" + str(price)
+        print card + ": $" + str(price)
     except:
         print "ERROR"
         #basically a catch if card isn't found
     return price
 
 #argument parsing
-print "Welcome to Karn Card Processor"
+print "Welcome to Karn Card Processor 1.0"
 try:
     if sys.argv[1] == "-m":
         manual_switch  = True
@@ -97,32 +105,37 @@ pwm.start(5)
 #now for the loop
 while True:
     pwm.ChangeDutyCycle(0.5)
-    print "You have 5 seconds to place card before picture: "
+    print "You have "+ str(alignment_time) +"  seconds to place card before picture: "
     time.sleep(alignment_time)
     print "Picture taking in process..."
     timestamp=time.strftime("%Y%m%d%H%M%S")
     pic_name = "test/mtg_"+timestamp+".jpg"
     camera.capture(pic_name)
     #crop photo to just card name
-    img = Image.open(pic_name)
-    area = (325, 515, 700, 600)
-    cropped_img = img.crop(area)
-    #cropped_img = cropped_img.rotate(rotation_angle)
-    cropped_img.save(pic_name)
+    crop_picture(pic_name)
     print "Picture taken! See {0}!".format(pic_name)
     #here's where all the new stuff goes...
     card = get_name(pic_name)
     price = get_price(card)
     if price > 0:
+        #if price > 0, means card was found - so we can be more confident on name too
+        #add card name to stored names file
+        with open("cards.txt", "a") as myfile:
+            myfile.write(card+"\n")
+        with open("prices.txt", "a") as myfile:
+            card_price = card + ": $" + str(price)
+            myfile.write(card_price + "\n")
+
+        print card + " added to storage files"
         if manual_switch:
-            raw_input("Press any button to drop card")
+            raw_input("Press Enter to drop card")
         pwm.ChangeDutyCycle(13.5)
         time.sleep(0.5)
         retry = 5
     else:
         retry -= 1
         if retry > 0:
-            print card + "not found. Will retry " + retry + " more times"
+            print card + "not found. Will retry " + str(retry) + " more times"
         else:
             print "Max number of retries reached. Moving on. Please insert new card"
             pwm.ChangeDutyCycle(13.5)
