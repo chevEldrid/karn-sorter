@@ -14,8 +14,10 @@ servoPin = 18
 camera = PiCamera()
 rotation_angle = 4
 alignment_time = 5
+area = (325, 520, 700, 620)
+ex_area = (300, 500, 750, 650)
 #runtime arguments
-manual_switch = False
+auto_switch = False
 #aws arguments
 s3 = boto3.resource("s3")
 PRG_PATH = "/home/pi/karn-sorter"
@@ -25,6 +27,9 @@ card_name = ""
 #api arguments
 #general stuff
 retry = 5
+#these numbers should match: starting count and total possible
+max_retry = 5
+cont = True
 
 def camera_setup(camera):
     #camera.color_effects = (128, 128)
@@ -39,8 +44,10 @@ def setup():
 #given picture name, crops it to just include name of card
 def crop_picture(pic_name):
     img = Image.open(pic_name)
-    area = (325, 515, 700, 600)
-    cropped_img = img.crop(area)
+    if retry > max_retry/2:
+        cropped_img = img.crop(area)
+    else:
+        cropped_img = img.crop(ex_area)
     #cropped_img = cropped_img.rotate(rotation_angle)
     cropped_img.save(pic_name)
 
@@ -83,15 +90,34 @@ def get_price(card):
         #basically a catch if card isn't found
     return price
 
+#deals with all possible actions after card read
+#SIDE EFFECTS: moves servo
+def cont_program(pwm, redo=False):
+    prompt = "Would you like to [c]ontinue or [q]uit?  "
+    if redo:
+        prompt = "Would you like to [c]ontinue, [q]uit, or [r]etry?  "
+    input = raw_input(prompt)
+    if input == "c":
+        pwm.ChangeDutyCycle(13.5)
+        time.sleep(0.5)
+        return True
+    elif input == "q":
+        return False
+    elif input == "r" and redo:
+        return True
+    else:
+        print "Couldn't understand input, please respond only with c,q, or r."
+        cont_program(pwm, redo)
+
 #argument parsing
 print "Welcome to Karn Card Processor 1.0"
 try:
-    if sys.argv[1] == "-m":
-        manual_switch  = True
-        print "you have selected manual"
+    if sys.argv[1] == "-a":
+        auto_switch  = True
+        print "you have selected automatic"
+        print "card will drop after " + str(alignment_time) + " seconds"
 except:
-    print "you have selected automatic."
-    print "card will drop after " + str(alignment_time) + " seconds"
+    print "you have selected manual."
 
 #use raw_input with python 2, input with python 3
 raw_input("Press Enter to begin...")
@@ -127,18 +153,20 @@ while True:
             myfile.write(card_price + "\n")
 
         print card + " added to storage files"
-        if manual_switch:
-            raw_input("Press Enter to drop card")
-        pwm.ChangeDutyCycle(13.5)
-        time.sleep(0.5)
+        if not auto_switch:
+            cont = cont_program(pwm)
+        else:
+            pwm.ChangeDutyCycle(13.5)
+            time.sleep(0.5)
         retry = 5
     else:
         retry -= 1
         if retry > 0:
             print card + "not found. Will retry " + str(retry) + " more times"
         else:
-            print "Max number of retries reached. Moving on. Please insert new card"
-            pwm.ChangeDutyCycle(13.5)
-            time.sleep(0.5)
-
+            print "Max number of retries reached."
+            cont = cont_program(pwm, True)
+    if not cont:
+        print "Program exiting. Thank you!"
+        break
 GPIO.cleanup()

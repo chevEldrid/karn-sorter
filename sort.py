@@ -53,7 +53,7 @@ while True:
     #crop photo to just card name
     img = Image.open(pic_name)
     print "attempting to crop..."
-    area = (325, 515, 700, 600)
+    area = (325, 520, 700, 620)
     cropped_img = img.crop(area)
     #cropped_img = cropped_img.rotate(rotation_angle)
     cropped_img.save(pic_name)
