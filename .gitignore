@@ -1,5 +1,7 @@
 #keeps photos from uploading
 test/
+#keeps crop tests from uploading
+crops/
 #ignore generated card list
 cards.txt
 prices.txt
