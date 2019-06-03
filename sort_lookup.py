@@ -27,6 +27,7 @@ card_name = ""
 #api arguments
 #general stuff
 retry = 5
+total_value = 0.0
 #these numbers should match: starting count and total possible
 max_retry = 5
 cont = True
@@ -53,6 +54,7 @@ def crop_picture(pic_name):
 
 #given picture name, uploads to S3 and runs against rekognition
 def get_name(filename):
+    card_name = ""
     s3.Bucket(BUCKET).upload_file(filename, filename)
     print filename + " successfully uploaded to S3"
     client = boto3.client('rekognition')
@@ -85,10 +87,16 @@ def get_price(card):
         x = json.loads(r.text)
         price = cheapestPrint(x)
         print card + ": $" + str(price)
+        add_value(price)
     except:
         print "ERROR"
         #basically a catch if card isn't found
     return price
+
+#adds a card price to running total value
+def add_value(price):
+    global total_value
+    total_value = total_value + float(price)
 
 #deals with all possible actions after card read
 #SIDE EFFECTS: moves servo
@@ -162,11 +170,15 @@ while True:
     else:
         retry -= 1
         if retry > 0:
-            print card + "not found. Will retry " + str(retry) + " more times"
+            print card + " not found. Will retry " + str(retry) + " more times"
         else:
             print "Max number of retries reached."
             cont = cont_program(pwm, True)
     if not cont:
+        str_value = ("%.2f" % total_value)
+        str_sell = ("%.2f" % (total_value * 2 / 3))
+        print "Total value of cards scanned is ${0}".format(str_value)
+        print "Approx sell value of cards scanned is ${0}".format(str_sell)
         print "Program exiting. Thank you!"
         break
 GPIO.cleanup()
