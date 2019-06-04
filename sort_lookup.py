@@ -177,6 +177,13 @@ while True:
     if not cont:
         str_value = ("%.2f" % total_value)
         str_sell = ("%.2f" % (total_value * 2 / 3))
+        #show end of section in files...
+        with open("cards.txt", "a") as myfile:
+            myfile.write("==================\n")
+        with open ("prices.txt", "a") as myfile:
+            myfile.write("==================\n")
+            myfile.write("Total value of above cards scanned is ${0}\n".format(str_value))
+            myfile.write("==================\n")
         print "Total value of cards scanned is ${0}".format(str_value)
         print "Approx sell value of cards scanned is ${0}".format(str_sell)
         print "Program exiting. Thank you!"
