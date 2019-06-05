@@ -57,7 +57,7 @@ def crop_picture(pic_name):
 def get_name(filename):
     card_name = ""
     s3.Bucket(BUCKET).upload_file(filename, filename)
-    print filename + " successfully uploaded to S3"
+    print(filename + " successfully uploaded to S3")
     client = boto3.client('rekognition')
     response = client.detect_text(Image={'S3Object':{'Bucket':BUCKET, 'Name':filename}})
     textDetections=response['TextDetections']
@@ -87,10 +87,10 @@ def get_price(card):
         r = requests.get("https://api.scryfall.com/cards/search", params=url_params)
         x = json.loads(r.text)
         price = cheapestPrint(x)
-        print card + ": $" + str(price)
+        print(card + ": $" + str(price))
         add_value(price)
     except:
-        print "ERROR"
+        print("ERROR")
         #basically a catch if card isn't found
     return price
 
@@ -105,31 +105,30 @@ def cont_program(pwm, redo=False):
     prompt = "Would you like to [c]ontinue or [q]uit?  "
     if redo:
         prompt = "Would you like to [c]ontinue, [q]uit, or [r]etry?  "
-    input = raw_input(prompt)
-    if input == "c":
+    resp  = input(prompt)
+    if resp == "c":
         pwm.ChangeDutyCycle(13.5)
         time.sleep(0.5)
         return True
-    elif input == "q":
+    elif resp == "q":
         return False
-    elif input == "r" and redo:
+    elif resp == "r" and redo:
         return True
     else:
-        print "Couldn't understand input, please respond only with c,q, or r."
+        print("Couldn't understand input, please respond only with c,q, or r.")
         cont_program(pwm, redo)
 
 #argument parsing
-print "Welcome to Karn Card Processor 1.0"
+print("Welcome to Karn Card Processor 1.0")
 try:
     if sys.argv[1] == "-a":
         auto_switch  = True
-        print "you have selected automatic"
-        print "card will drop after " + str(alignment_time) + " seconds"
+        print("you have selected automatic")
+        print("card will drop after " + str(alignment_time) + " seconds")
 except:
-    print "you have selected manual."
+    print("you have selected manual.")
 
-#use raw_input with python 2, input with python 3
-raw_input("Press Enter to begin...")
+input("Press Enter to begin...")
 #program setup
 setup()
 camera_setup(camera)
@@ -140,19 +139,19 @@ pwm.start(5)
 #now for the loop
 while True:
     pwm.ChangeDutyCycle(0.5)
-    print "You have "+ str(alignment_time) +"  seconds to place card before picture: "
+    print("You have "+ str(alignment_time) +"  seconds to place card before picture: ")
     time.sleep(alignment_time)
-    print "Picture taking in process..."
+    print("Picture taking in process...")
     timestamp=time.strftime("%Y%m%d%H%M%S")
     pic_name = "test/mtg_"+timestamp+".jpg"
     camera.capture(pic_name)
     #crop photo to just card name
     crop_picture(pic_name)
-    print "Picture taken! See {0}!".format(pic_name)
+    print("Picture taken! See {0}!".format(pic_name))
     #here's where all the new stuff goes...
     card = get_name(pic_name)
     price = get_price(card)
-    if price > 0:
+    if float(price) > 0:
         #if price > 0, means card was found - so we can be more confident on name too
         #add card name to stored names file
         with open("cards.txt", "a") as myfile:
@@ -161,7 +160,7 @@ while True:
         with open("mtgcards.csv", "a") as myfile:
             writer = csv.writer(myfile)
             writer.writerow([card, "1", str(price)])
-        print card + " added to storage files"
+        print(card + " added to storage files")
         if not auto_switch:
             cont = cont_program(pwm)
         else:
@@ -171,9 +170,9 @@ while True:
     else:
         retry -= 1
         if retry > 0:
-            print card + " not found. Will retry " + str(retry) + " more times"
+            print(card + " not found. Will retry " + str(retry) + " more times")
         else:
-            print "Max number of retries reached."
+            print("Max number of retries reached.")
             cont = cont_program(pwm, True)
     if not cont:
         str_value = ("%.2f" % total_value)
@@ -181,8 +180,8 @@ while True:
         #show end of section in files...
         with open("cards.txt", "a") as myfile:
             myfile.write("==================\n")
-        print "Total value of cards scanned is ${0}".format(str_value)
-        print "Approx sell value of cards scanned is ${0}".format(str_sell)
-        print "Program exiting. Thank you!"
+        print("Total value of cards scanned is ${0}".format(str_value))
+        print("Approx sell value of cards scanned is ${0}".format(str_sell))
+        print("Program exiting. Thank you!")
         break
 GPIO.cleanup()

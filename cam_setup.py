@@ -27,18 +27,18 @@ def string_crop(dimensions):
         temp += (str(dimensions[i])+",")
     return temp
 #------------------------------------------------------
-print "Welcome to The Crop Finder..."
+print("Welcome to The Crop Finder...")
 camera_setup(camera)
 
 #take 10 pictures at various croppings - see which is best
 for i in range(0, 10):
-    print string_crop(area)
+    print(string_crop(area))
     time.sleep(alignment_time)
     pic_name = "crops/mtg_"+str(i)+".jpg"
     camera.capture(pic_name)
     #crop photo
     crop_picture(pic_name)
-    print "Picture taken! See {0}!".format(pic_name)
+    print("Picture taken! See {0}!".format(pic_name))
     #adjust area
     #x
     x_0 = area[0] + adjs_x[i]
