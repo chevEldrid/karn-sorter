@@ -68,12 +68,42 @@ def get_name(filename):
                break
     return card_name
 
+#catch method for some of the general errors from Rekognition
+def clean_name(card):
+    if card != '':
+        #aws confuses new typefont J for l (the J doesn't really have a tail)
+        if(card[0] == "l"):
+            card = "J"+card[1:]
+        card_words = card.split()
+        #sometimes it picks up generic mana symbols...
+        if is_int(card_words[-1]):
+            del card_words[-1]
+        card = ' '.join(card_words)
+        #periods instead of commas
+        card = card.replace(".",",")
+    return card
+
+#helper for number reading
+def is_int(word):
+    temp = False
+    try:
+        int(word)
+        temp = True
+    except:
+        temp = False
+        #code breaks trying to int(gorgonzola)
+    return temp
+
 #given api card data, finds paper printing with lowest price
 def cheapestPrint(cardData):
     printings = cardData["data"]
+    print("made it this far...")
     prices = []
     for price in printings:
+        #catch single printings in foil
         cardPrice = price["prices"]["usd"]
+        if not is_int(cardPrice):
+            cardPrice = price["prices"]["usd_foil"]
         if cardPrice != None:
             prices.append(cardPrice)
     return min(prices)
@@ -87,6 +117,7 @@ def get_price(card):
         r = requests.get("https://api.scryfall.com/cards/search", params=url_params)
         x = json.loads(r.text)
         price = cheapestPrint(x)
+        print("cheapest price got")
         print(card + ": $" + str(price))
         add_value(price)
     except:
@@ -150,6 +181,7 @@ while True:
     print("Picture taken! See {0}!".format(pic_name))
     #here's where all the new stuff goes...
     card = get_name(pic_name)
+    card = clean_name(card)
     price = get_price(card)
     if float(price) > 0:
         #if price > 0, means card was found - so we can be more confident on name too
@@ -173,6 +205,7 @@ while True:
             print(card + " not found. Will retry " + str(retry) + " more times")
         else:
             print("Max number of retries reached.")
+            retry = 5
             cont = cont_program(pwm, True)
     if not cont:
         str_value = ("%.2f" % total_value)
