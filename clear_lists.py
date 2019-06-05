@@ -17,7 +17,7 @@ if input == "y":
     for s in card_sheets:
         with open(s, "wb") as myfile:
             writer = csv.writer(myfile)
-            writer.writerow(["",""])
+            writer.writerow(["card","qty", "price"])
 
     print "storage files cleared!"
     for filename in os.listdir(PRG_PATH+'/'+FOLDER):

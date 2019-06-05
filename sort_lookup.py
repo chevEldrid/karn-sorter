@@ -15,7 +15,7 @@ servoPin = 18
 camera = PiCamera()
 rotation_angle = 4
 alignment_time = 5
-area = (325, 520, 700, 620)
+area = (325, 550, 700, 650)
 ex_area = (300, 500, 750, 650)
 #runtime arguments
 auto_switch = False
@@ -160,7 +160,7 @@ while True:
         #adds prices and names to a csv
         with open("mtgcards.csv", "a") as myfile:
             writer = csv.writer(myfile)
-            writer.writerow([card, str(price)])
+            writer.writerow([card, "1", str(price)])
         print card + " added to storage files"
         if not auto_switch:
             cont = cont_program(pwm)
@@ -180,10 +180,6 @@ while True:
         str_sell = ("%.2f" % (total_value * 2 / 3))
         #show end of section in files...
         with open("cards.txt", "a") as myfile:
-            myfile.write("==================\n")
-        with open ("prices.txt", "a") as myfile:
-            myfile.write("==================\n")
-            myfile.write("Total value of above cards scanned is ${0}\n".format(str_value))
             myfile.write("==================\n")
         print "Total value of cards scanned is ${0}".format(str_value)
         print "Approx sell value of cards scanned is ${0}".format(str_sell)

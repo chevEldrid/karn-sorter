@@ -6,7 +6,7 @@ import time
 camera = PiCamera()
 rotation_angle = 4
 alignment_time = 2
-area = (325, 520, 700, 620)
+area = (325, 550, 700, 650)
 adjs_x = (-20, -10, 10, 20, 30, 0, 0, 0, 0, 0)
 adjs_y = (0, 0, 0, 0, 0, -20, -10, 10, 20, 0)
 
