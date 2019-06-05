@@ -5,3 +5,4 @@ crops/
 #ignore generated card list
 cards.txt
 prices.txt
+mtgcards.csv

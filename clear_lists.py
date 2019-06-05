@@ -1,6 +1,8 @@
 import sys
 import os
-card_lists = ["cards.txt", "prices.txt"]
+import csv
+card_lists = ["cards.txt"]
+card_sheets = ["mtgcards.csv"]
 PRG_PATH = "/home/pi/karn-sorter"
 FOLDER = "test"
 CP_FOLDER = "crops"
@@ -8,10 +10,15 @@ CP_FOLDER = "crops"
 input = raw_input("This script will clear all stored card lists AND delete all card photos in " + PRG_PATH+"/"+FOLDER+"...type [y]es to continue:  ")
 
 if input == "y":
-    #clears cards.txt and prices.txt for testing purposes
+    #clears cards.txt for testing purposes
     for l in card_lists:
         with open(l, "w") as myfile:
             myfile.write("")
+    for s in card_sheets:
+        with open(s, "wb") as myfile:
+            writer = csv.writer(myfile)
+            writer.writerow(["",""])
+
     print "storage files cleared!"
     for filename in os.listdir(PRG_PATH+'/'+FOLDER):
         os.remove(FOLDER + "/" + filename)

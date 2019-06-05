@@ -3,6 +3,7 @@ from picamera import PiCamera
 import RPi.GPIO as GPIO
 import sys
 import time
+import csv
 #imports for the aws portion
 import boto3
 import os
@@ -156,10 +157,10 @@ while True:
         #add card name to stored names file
         with open("cards.txt", "a") as myfile:
             myfile.write(card+"\n")
-        with open("prices.txt", "a") as myfile:
-            card_price = card + ": $" + str(price)
-            myfile.write(card_price + "\n")
-
+        #adds prices and names to a csv
+        with open("mtgcards.csv", "a") as myfile:
+            writer = csv.writer(myfile)
+            writer.writerow([card, str(price)])
         print card + " added to storage files"
         if not auto_switch:
             cont = cont_program(pwm)
