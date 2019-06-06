@@ -80,6 +80,9 @@ for i, val in enumerate(cards):
         #if there was an error with the price pulling...
         if float(price) > 0:
             result.append((name, qty, price))
+            #if there's been a considerable change in price...
+            if float(price) > 2*float(old_price):
+                print("price spike on: {0}. From ${1} to ${2}".format(name, old_price, price))
         else:
             result.append((name, qty, old_price))
         result_names.append(name)
