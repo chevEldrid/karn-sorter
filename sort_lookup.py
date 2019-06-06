@@ -94,6 +94,15 @@ def is_int(word):
         #code breaks trying to int(gorgonzola)
     return temp
 
+def is_float(word):
+    temp = False
+    try:
+        float(word)
+        temp = True
+    except:
+        temp = False
+    return temp
+
 #given api card data, finds paper printing with lowest price
 def cheapestPrint(cardData):
     printings = cardData["data"]
@@ -102,7 +111,7 @@ def cheapestPrint(cardData):
         #catch single printings in foil
         cardPrice = price["prices"]["usd"]
         #if card doesn't have a price, it might still have a foil usd price
-        if not is_int(cardPrice):
+        if not is_float(cardPrice):
             cardPrice = price["prices"]["usd_foil"]
         if cardPrice != None:
             prices.append(cardPrice)
