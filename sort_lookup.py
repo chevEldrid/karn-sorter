@@ -57,7 +57,7 @@ def crop_picture(pic_name):
 def get_name(filename):
     card_name = ""
     s3.Bucket(BUCKET).upload_file(filename, filename)
-    print(filename + " successfully uploaded to S3")
+    #print(filename + " successfully uploaded to S3")
     client = boto3.client('rekognition')
     response = client.detect_text(Image={'S3Object':{'Bucket':BUCKET, 'Name':filename}})
     textDetections=response['TextDetections']
@@ -105,16 +105,13 @@ def is_float(word):
 
 #given api card data, finds paper printing with lowest price
 def cheapestPrint(cardData):
-    printings = cardData["data"]
+    printing = cardData["data"][0]
     prices = []
-    for price in printings:
-        #catch single printings in foil
-        cardPrice = price["prices"]["usd"]
-        #if card doesn't have a price, it might still have a foil usd price
-        if not is_float(cardPrice):
-            cardPrice = price["prices"]["usd_foil"]
-        if cardPrice != None:
-            prices.append(cardPrice)
+    cardPrice = printing["prices"]["usd"]
+    if not is_float(cardPrice):
+        cardPrice = printing["prices"]["usd_foil"]
+    if cardPrice != None:
+        prices.append(cardPrice)
     return min(prices)
 
 #given a card name, pings Scryfall to see if a card exists with name and then price
@@ -122,8 +119,8 @@ def get_price(card):
     global retry
     price = -1
     try:
-        url_params = {'q':card, 'order':'usd'}
-        r = requests.get("https://api.scryfall.com/cards/search", params=url_params)
+        url = "https://api.scryfall.com/cards/search?q=!\"{0}\"&order={1}".format(card, "name")
+        r = requests.get(url)
         x = json.loads(r.text)
         price = cheapestPrint(x)
         print("cheapest price got")
@@ -142,21 +139,21 @@ def add_value(price):
 #deals with all possible actions after card read
 #SIDE EFFECTS: moves servo
 def cont_program(pwm, redo=False):
-    prompt = "Would you like to [c]ontinue or [q]uit?  "
-    if redo:
-        prompt = "Would you like to [c]ontinue, [q]uit, or [r]etry?  "
-    resp  = input(prompt)
-    if resp == "c":
-        pwm.ChangeDutyCycle(13.5)
-        time.sleep(0.5)
-        return True
-    elif resp == "q":
-        return False
-    elif resp == "r" and redo:
-        return True
-    else:
-        print("Couldn't understand input, please respond only with c,q, or r.")
-        cont_program(pwm, redo)
+    while True:
+        prompt = "Would you like to [c]ontinue or [q]uit?  "
+        if redo:
+            prompt = "Would you like to [c]ontinue, [q]uit, or [r]etry?  "
+        resp  = input(prompt)
+        if resp == "c":
+            pwm.ChangeDutyCycle(13.5)
+            time.sleep(0.5)
+            return True
+        elif resp == "q":
+            return False
+        elif resp == "r" and redo:
+            return True
+        else:
+            print("Couldn't understand input, please respond only with c,q, or r.")
 
 #argument parsing
 print("Welcome to Karn Card Processor 1.0")
@@ -187,7 +184,7 @@ while True:
     camera.capture(pic_name)
     #crop photo to just card name
     crop_picture(pic_name)
-    print("Picture taken! See {0}!".format(pic_name))
+    #print("Picture taken! See {0}!".format(pic_name))
     #here's where all the new stuff goes...
     card = get_name(pic_name)
     card = clean_name(card)

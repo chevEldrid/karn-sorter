@@ -24,21 +24,20 @@ def is_float(word):
 def cheapest_print(cardData):
     printings = cardData["data"]
     prices = []
-    for price in printings:
-        cardPrice = price["prices"]["usd"]
-        #if card has no usd price, it might only have a foil price
-        if not is_float(cardPrice):
-            cardPrice = price["prices"]["usd_foil"]
-        if cardPrice != None:
-            prices.append(cardPrice)
+    cardPrice = price["prices"]["usd"]
+    #if card has no usd price, it might only have a foil price
+    if not is_float(cardPrice):
+        cardPrice = price["prices"]["usd_foil"]
+    if cardPrice != None:
+        prices.append(cardPrice)
     return min(prices)
 
 #given card name, pings scryfall for card data
 def get_price(card):
     price = -1
     try:
-        url_params = {'q':card, 'order':'usd'}
-        r = requests.get("https://api.scryfall.com/cards/search", params=url_params)
+        url = "https://api.scryfall.com/cards/search?q=!\"{0}\"&order={1}".format(card, name)
+        r = requests.get(url)
         x = json.loads(r.text)
         price = cheapest_print(x)
     except:
