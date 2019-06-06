@@ -97,11 +97,11 @@ def is_int(word):
 #given api card data, finds paper printing with lowest price
 def cheapestPrint(cardData):
     printings = cardData["data"]
-    print("made it this far...")
     prices = []
     for price in printings:
         #catch single printings in foil
         cardPrice = price["prices"]["usd"]
+        #if card doesn't have a price, it might still have a foil usd price
         if not is_int(cardPrice):
             cardPrice = price["prices"]["usd_foil"]
         if cardPrice != None:
@@ -113,7 +113,7 @@ def get_price(card):
     global retry
     price = -1
     try:
-        url_params = {'q':card, 'unique':'prints', 'order':'usd'}
+        url_params = {'q':card, 'order':'usd'}
         r = requests.get("https://api.scryfall.com/cards/search", params=url_params)
         x = json.loads(r.text)
         price = cheapestPrint(x)

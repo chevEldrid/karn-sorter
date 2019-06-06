@@ -1,14 +1,24 @@
-
+import sys
 import csv
 import requests
 import json
 import time
-
+#command line arguments: [-r] - just consolidate, no price pulling
 card_file = "mtgcards.csv"
-out_file = "cardlist.csv"
+out_file = "mtgcards.csv"
 cards = [] #name, qty, price
 result_names = [] #list of result card names
 result = [] #generated card list
+reprice = True
+
+def is_float(word):
+    temp = False
+    try:
+        float(word)
+        temp = True
+    except:
+        temp = False
+    return temp
 
 #given scryfall api card data, finds paper printing with cheapest price
 def cheapest_print(cardData):
@@ -16,6 +26,9 @@ def cheapest_print(cardData):
     prices = []
     for price in printings:
         cardPrice = price["prices"]["usd"]
+        #if card has no usd price, it might only have a foil price
+        if not is_float(cardPrice):
+            cardPrice = price["prices"]["usd_foil"]
         if cardPrice != None:
             prices.append(cardPrice)
     return min(prices)
@@ -24,7 +37,7 @@ def cheapest_print(cardData):
 def get_price(card):
     price = -1
     try:
-        url_params = {'q':card, 'unique':'prints', 'order':'usd'}
+        url_params = {'q':card, 'order':'usd'}
         r = requests.get("https://api.scryfall.com/cards/search", params=url_params)
         x = json.loads(r.text)
         price = cheapest_print(x)
@@ -34,7 +47,15 @@ def get_price(card):
     return price
 
 #---------------------------
-#read in file with all card information...
+#check for arg about repricing list
+try:
+    if sys.argv[1] == "-r":
+        reprice = False
+        print("will not pull new price data from scryfall")
+except:
+    print("will consolidate and pull new prices from scryfall")
+
+#bring in file with all card information...
 with open(card_file) as csvfile:
     readCSV = csv.reader(csvfile, delimiter=',')
     for row in readCSV:
@@ -45,14 +66,22 @@ del cards[0]
 for i, val in enumerate(cards):
     name = val[0]
     qty = int(val[1])
-    price = get_price(name)
+    old_price = val[2]
     #if the card hasn't already been found...
     if name not in result_names:
+        if reprice:
+            price = get_price(name)
+        else:
+            price = val[2]
         #iterate through every remaining entry in table
         for j in range(i+1, len(cards)):
             if cards[j][0] == name:
                 qty += 1
-        result.append((name, qty, price))
+        #if there was an error with the price pulling...
+        if float(price) > 0:
+            result.append((name, qty, price))
+        else:
+            result.append((name, qty, old_price))
         result_names.append(name)
 #now print to csv
 with open(out_file, "w") as csvfile:
