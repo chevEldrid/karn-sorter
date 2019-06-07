@@ -4,12 +4,15 @@ import requests
 import json
 import time
 #command line arguments: [-r] - just consolidate, no price pulling
+#                        [-p] - just price, don't consolidate
 card_file = "mtgcards.csv"
 out_file = "mtgcards.csv"
 cards = [] #name, qty, price
 result_names = [] #list of result card names
 result = [] #generated card list
+#argv stuff
 reprice = True
+condense = True
 
 def is_float(word):
     temp = False
@@ -24,19 +27,21 @@ def is_float(word):
 def cheapest_print(cardData):
     printings = cardData["data"]
     prices = []
-    cardPrice = price["prices"]["usd"]
-    #if card has no usd price, it might only have a foil price
-    if not is_float(cardPrice):
-        cardPrice = price["prices"]["usd_foil"]
-    if cardPrice != None:
-        prices.append(cardPrice)
+    for price in printings:
+        cardPrice = price["prices"]["usd"]
+        #if card has no usd price, it might only have a foil price
+        if not is_float(cardPrice):
+            cardPrice = price["prices"]["usd_foil"]
+        if cardPrice != None:
+            #print(printings[0]["name"] +": "+str(cardPrice))
+            prices.append(float(cardPrice))
     return min(prices)
 
 #given card name, pings scryfall for card data
 def get_price(card):
     price = -1
     try:
-        url = "https://api.scryfall.com/cards/search?q=!\"{0}\"&order={1}".format(card, name)
+        url = "https://api.scryfall.com/cards/search?q=!\"{0}\"&order={1}&unique=prints".format(card, "name")
         r = requests.get(url)
         x = json.loads(r.text)
         price = cheapest_print(x)
@@ -47,12 +52,18 @@ def get_price(card):
 
 #---------------------------
 #check for arg about repricing list
-try:
-    if sys.argv[1] == "-r":
-        reprice = False
-        print("will not pull new price data from scryfall")
-except:
-    print("will consolidate and pull new prices from scryfall")
+if '-r' in sys.argv:
+    reprice = False
+    print("Will not pull new price data from scryfall")
+else:
+    print("Will pull new price data from scryfall")
+#check for arg about condensing list
+if '-p' in sys.argv:
+    condense = False
+    print("Will not check for consolidation")
+else:
+    print("Will consolidate all duplicates")
+
 
 #bring in file with all card information...
 with open(card_file) as csvfile:
@@ -72,19 +83,24 @@ for i, val in enumerate(cards):
             price = get_price(name)
         else:
             price = val[2]
-        #iterate through every remaining entry in table
-        for j in range(i+1, len(cards)):
-            if cards[j][0] == name:
-                qty += 1
+        #iterate through every remaining entry in table, if condensing
+        if condense:
+            for j in range(i+1, len(cards)):
+                if cards[j][0] == name:
+                    qty += 1
         #if there was an error with the price pulling...
         if float(price) > 0:
             result.append((name, qty, price))
             #if there's been a considerable change in price...
-            if float(price) > 2*float(old_price):
+            if float(price) > 1.5*float(old_price):
                 print("price spike on: {0}. From ${1} to ${2}".format(name, old_price, price))
+            if float(price) < 0.5*float(old_price):
+                print("price drop on: {0}. From ${1} to ${2}".format(name, old_price, price))
         else:
-            result.append((name, qty, old_price))
-        result_names.append(name)
+            result.append((name, qty, old_price, "FAILED"))
+        #only add result to result name table if we're preventing duplicate searches
+        if condense:
+            result_names.append(name)
 #now print to csv
 with open(out_file, "w") as csvfile:
     writer = csv.writer(csvfile)

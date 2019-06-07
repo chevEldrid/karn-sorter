@@ -105,13 +105,14 @@ def is_float(word):
 
 #given api card data, finds paper printing with lowest price
 def cheapestPrint(cardData):
-    printing = cardData["data"][0]
+    printings = cardData["data"]
     prices = []
-    cardPrice = printing["prices"]["usd"]
-    if not is_float(cardPrice):
-        cardPrice = printing["prices"]["usd_foil"]
-    if cardPrice != None:
-        prices.append(cardPrice)
+    for price in printings:
+        cardPrice = price["prices"]["usd"]
+        if not is_float(cardPrice):
+            cardPrice = price["prices"]["usd_foil"]
+        if cardPrice != None:
+            prices.append(float(cardPrice))
     return min(prices)
 
 #given a card name, pings Scryfall to see if a card exists with name and then price
@@ -119,7 +120,7 @@ def get_price(card):
     global retry
     price = -1
     try:
-        url = "https://api.scryfall.com/cards/search?q=!\"{0}\"&order={1}".format(card, "name")
+        url = "https://api.scryfall.com/cards/search?q=!\"{0}\"&order={1}&unique=prints".format(card, "name")
         r = requests.get(url)
         x = json.loads(r.text)
         price = cheapestPrint(x)
