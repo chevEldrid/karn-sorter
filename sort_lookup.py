@@ -11,11 +11,18 @@ import os
 import requests
 import json
 
+#pin on pi connected to servo control
 servoPin = 18
 camera = PiCamera()
-rotation_angle = 4
-alignment_time = 5
+#if cards are at an angle, use this to right them
+rotation_angle = 0
+#time given between pictures
+alignment_time = 4
+#time given between retriy pictures
+retry_align_time = 2
+#cropped area of photo
 area = (325, 550, 700, 650)
+#expanded area of photo cropped if first few pics don't work
 ex_area = (300, 500, 750, 650)
 #runtime arguments
 auto_switch = False
@@ -71,14 +78,19 @@ def get_name(filename):
 #catch method for some of the general errors from Rekognition
 def clean_name(card):
     if card != '':
-        #aws confuses new typefont J for l (the J doesn't really have a tail)
-        if(card[0] == "l"):
-            card = "J"+card[1:]
         card_words = card.split()
+        words = []
+        for word in card_words:
+            #aws confuses new font "J" for "l"
+            if(word[0] == "l"):
+                word = "J"+word[1:]
+            words.append(word)
+
         #sometimes it picks up generic mana symbols...
-        if is_int(card_words[-1]):
+        if is_int(words[-1]):
             del card_words[-1]
-        card = ' '.join(card_words)
+        #rejoin all words
+        card = ' '.join(words)
         #periods instead of commas
         card = card.replace(".",",")
     return card
@@ -177,8 +189,12 @@ pwm.start(5)
 #now for the loop
 while True:
     pwm.ChangeDutyCycle(0.5)
-    print("You have "+ str(alignment_time) +"  seconds to place card before picture: ")
-    time.sleep(alignment_time)
+    #speed things up if it's a retry of a previous card
+    a_time = alignment_time
+    if retry != max_retry:
+        a_time = retry_align_time
+    print("You have "+ str(a_time) +"  seconds to place card before picture: ")
+    time.sleep(a_time)
     print("Picture taking in process...")
     timestamp=time.strftime("%Y%m%d%H%M%S")
     pic_name = "test/mtg_"+timestamp+".jpg"
@@ -205,14 +221,14 @@ while True:
         else:
             pwm.ChangeDutyCycle(13.5)
             time.sleep(0.5)
-        retry = 5
+        retry = max_retry
     else:
         retry -= 1
         if retry > 0:
             print(card + " not found. Will retry " + str(retry) + " more times")
         else:
             print("Max number of retries reached.")
-            retry = 5
+            retry = max_retry
             cont = cont_program(pwm, True)
     if not cont:
         str_value = ("%.2f" % total_value)
