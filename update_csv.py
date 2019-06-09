@@ -87,7 +87,7 @@ for i, val in enumerate(cards):
         if condense:
             for j in range(i+1, len(cards)):
                 if cards[j][0] == name:
-                    qty += 1
+                    qty += int(cards[j][1])
         #if there was an error with the price pulling...
         if float(price) > 0:
             result.append((name, qty, price))
