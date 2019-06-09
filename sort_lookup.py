@@ -38,6 +38,11 @@ retry = 5
 total_value = 0.0
 #these numbers should match: starting count and total possible
 max_retry = 5
+#total cards scanned in this session
+total_cards = 0
+#total failures in this session
+total_failures = 0
+
 cont = True
 
 def camera_setup(camera):
@@ -208,6 +213,8 @@ while True:
     price = get_price(card)
     if float(price) > 0:
         #if price > 0, means card was found - so we can be more confident on name too
+        #increase count of total cards scanned
+        total_cards += 1
         #add card name to stored names file
         with open("cards.txt", "a") as myfile:
             myfile.write(card+"\n")
@@ -229,6 +236,8 @@ while True:
         else:
             print("Max number of retries reached.")
             retry = max_retry
+            #increase total failure count
+            total_failures += 1
             cont = cont_program(pwm, True)
     if not cont:
         str_value = ("%.2f" % total_value)
@@ -238,6 +247,8 @@ while True:
             myfile.write("==================\n")
         print("Total value of cards scanned is ${0}".format(str_value))
         print("Approx sell value of cards scanned is ${0}".format(str_sell))
+        success_ratio = float(total_failures)/float(total_cards)*100
+        print("Failure rate at: {0:.2f}%".format(success_ratio))
         print("Program exiting. Thank you!")
         break
 GPIO.cleanup()

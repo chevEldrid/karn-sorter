@@ -97,7 +97,7 @@ for i, val in enumerate(cards):
             if float(price) < 0.5*float(old_price):
                 print("price drop on: {0}. From ${1} to ${2}".format(name, old_price, price))
         else:
-            result.append((name, qty, old_price, "FAILED"))
+            result.append((name, qty, old_price))
         #only add result to result name table if we're preventing duplicate searches
         if condense:
             result_names.append(name)
