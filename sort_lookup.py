@@ -11,6 +11,7 @@ import os
 import requests
 import json
 
+#system arguments: -f :use foiling pricing for all cards scanned this session
 #pin on pi connected to servo control
 servoPin = 18
 camera = PiCamera()
@@ -42,6 +43,8 @@ max_retry = 5
 total_cards = 0
 #total failures in this session
 total_failures = 0
+#if using foil prices for session
+foil = False
 
 cont = True
 
@@ -89,8 +92,10 @@ def clean_name(card):
             #aws confuses new font "J" for "l"
             if(word[0] == "l"):
                 word = "J"+word[1:]
+            #sometimes "to" is confused with "10"
+            if word == "10":
+                word = "to"
             words.append(word)
-
         #sometimes it picks up generic mana symbols...
         if is_int(words[-1]):
             del card_words[-1]
@@ -126,6 +131,8 @@ def cheapestPrint(cardData):
     prices = []
     for price in printings:
         cardPrice = price["prices"]["usd"]
+        if foil:
+            cardPrice = price["prices"]["usd_foil"]
         if not is_float(cardPrice):
             cardPrice = price["prices"]["usd_foil"]
         if cardPrice != None:
@@ -172,16 +179,20 @@ def cont_program(pwm, redo=False):
             return True
         else:
             print("Couldn't understand input, please respond only with c,q, or r.")
-
+#----------------------------------------------------------------
 #argument parsing
+#auto next card
 print("Welcome to Karn Card Processor 1.0")
-try:
-    if sys.argv[1] == "-a":
-        auto_switch  = True
-        print("you have selected automatic")
-        print("card will drop after " + str(alignment_time) + " seconds")
-except:
+if "-a" in sys.argv:
+    auto_switch  = True
+    print("you have selected automatic")
+    print("card will drop after " + str(alignment_time) + " seconds")
+else:
     print("you have selected manual.")
+#use foil prices for session
+if "-f" in sys.argv:
+    foil = True
+    print("Will use usd_foil prices for all cards scanned")
 
 input("Press Enter to begin...")
 #program setup
@@ -221,6 +232,8 @@ while True:
         #adds prices and names to a csv
         with open("mtgcards.csv", "a") as myfile:
             writer = csv.writer(myfile)
+            if foil:
+                card = card + " *f*"
             writer.writerow([card, "1", str(price)])
         print(card + " added to storage files")
         if not auto_switch:
