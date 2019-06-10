@@ -24,11 +24,15 @@ def is_float(word):
     return temp
 
 #given scryfall api card data, finds paper printing with cheapest price
-def cheapest_print(cardData):
+def cheapest_print(cardData, foil):
     printings = cardData["data"]
     prices = []
     for price in printings:
-        cardPrice = price["prices"]["usd"]
+        #if foil flag, use foil price
+        if foil:
+            cardPrice = price["prices"]["usd_foil"]
+        else:
+            cardPrice = price["prices"]["usd"]
         #if card has no usd price, it might only have a foil price
         if not is_float(cardPrice):
             cardPrice = price["prices"]["usd_foil"]
@@ -38,18 +42,33 @@ def cheapest_print(cardData):
     return min(prices)
 
 #given card name, pings scryfall for card data
-def get_price(card):
+def get_price(card, foil):
     price = -1
+    card = get_name(card, foil)
     try:
         url = "https://api.scryfall.com/cards/search?q=!\"{0}\"&order={1}&unique=prints".format(card, "name")
         r = requests.get(url)
         x = json.loads(r.text)
-        price = cheapest_print(x)
+        #pass foil flag to cheapest print
+        price = cheapest_print(x, foil)
     except:
         print("ERROR ON: " + card)
     time.sleep(.1)
     return price
 
+#given card name, is the card foil
+def is_foil(card):
+    words = card.split()
+    if words[-1] == "*f*":
+        return True
+    return False
+
+#removes tags given to card name on sheet
+def get_name(card, foil):
+    words = card.split()
+    if foil:
+        del words[-1]
+    return " ".join(words)
 #---------------------------
 #check for arg about repricing list
 if '-r' in sys.argv:
@@ -80,7 +99,8 @@ for i, val in enumerate(cards):
     #if the card hasn't already been found...
     if name not in result_names:
         if reprice:
-            price = get_price(name)
+            foil = is_foil(name)
+            price = get_price(name, foil)
         else:
             price = val[2]
         #iterate through every remaining entry in table, if condensing
