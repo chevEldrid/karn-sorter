@@ -29,7 +29,7 @@ def is_float(word):
     return temp
 
 #given scryfall api card data, finds paper printing with cheapest price
-def cheapest_print(cardData, foil):
+def cheapest_print(cardData, foil, set_code):
     printings = cardData["data"]
     prices = []
     for price in printings:
@@ -42,20 +42,24 @@ def cheapest_print(cardData, foil):
         if not is_float(cardPrice):
             cardPrice = price["prices"]["usd_foil"]
         if cardPrice != None:
-            #print(printings[0]["name"] +": "+str(cardPrice))
-            prices.append(float(cardPrice))
+            #if specific set wanted, checked here
+            if set_code == "":
+                prices.append(float(cardPrice))
+            else:
+                if price["set"].upper() == set_code.upper():
+                    prices.append(float(cardPrice))
     return min(prices)
 
 #given card name, pings scryfall for card data
-def get_price(card, foil):
+def get_price(card, foil, set_code):
     price = -1
-    card = get_name(card, foil)
+    card_name = get_name(card)
     try:
-        url = "https://api.scryfall.com/cards/search?q=!\"{0}\"&order={1}&unique=prints".format(card, "name")
+        url = "https://api.scryfall.com/cards/search?q=!\"{0}\"&order={1}&unique=prints".format(card_name, "name")
         r = requests.get(url)
         x = json.loads(r.text)
         #pass foil flag to cheapest print
-        price = cheapest_print(x, foil)
+        price = cheapest_print(x, foil, set_code)
     except:
         print("ERROR ON: " + card)
     time.sleep(.1)
@@ -64,16 +68,32 @@ def get_price(card, foil):
 #given card name, is the card foil
 def is_foil(card):
     words = card.split()
-    if words[-1] == "*f*":
-        return True
+    for word in words:
+        if word == "*f*":
+            return True
     return False
 
-#removes tags given to card name on sheet
-def get_name(card, foil):
+#given card name, gets set code
+def get_set_code(card):
     words = card.split()
-    if foil:
-        del words[-1]
-    return " ".join(words)
+    for word in words:
+        if "[" in word:
+            return word[1:4]
+    return ""
+
+#removes tags given to card name on sheet
+def get_name(card):
+    words = card.split()
+    name = []
+    for word in words:
+        #if card is foil...
+        if word == "*f*":
+            continue
+        #if card has set code in the form [kld]...
+        if "[" in word:
+            continue
+        name.append(word)
+    return " ".join(name)
 #---------------------------
 #check for arg about repricing list
 if '-r' in sys.argv:
@@ -105,7 +125,8 @@ for i, val in enumerate(cards):
     if name not in result_names:
         if reprice:
             foil = is_foil(name)
-            price = get_price(name, foil)
+            set_code = get_set_code(name)
+            price = get_price(name, foil, set_code)
         else:
             price = val[2]
         #iterate through every remaining entry in table, if condensing
