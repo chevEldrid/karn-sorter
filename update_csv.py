@@ -13,6 +13,11 @@ result = [] #generated card list
 #argv stuff
 reprice = True
 condense = True
+#pricing info
+bulk_ceiling = 0.30
+bulk_rate = 5 #x$/1000 bulk cards
+total_value = 0.0
+bulk_count = 0
 
 def is_float(word):
     temp = False
@@ -126,4 +131,11 @@ with open(out_file, "w") as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow(["card","qty","price"])
     for card in result:
+        #generate pricing info...
+        if float(card[2]) > bulk_ceiling:
+            total_value += (float(card[2]) * int(card[1])) #price x qty
+        else:
+            bulk_count += int(card[1]) #qty
         writer.writerow([card[0], card[1], card[2]])
+collection_value = total_value + (bulk_count/1000.0*bulk_rate)
+print("Total collection valued at {0:.2f}, with bulk rated at {1} per thousand".format(collection_value, bulk_rate))
