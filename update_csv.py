@@ -78,7 +78,7 @@ def get_set_code(card):
     words = card.split()
     for word in words:
         if "[" in word:
-            return word[1:4]
+            return word[1:-1]
     return ""
 
 #removes tags given to card name on sheet
@@ -113,7 +113,10 @@ else:
 with open(card_file) as csvfile:
     readCSV = csv.reader(csvfile, delimiter=',')
     for row in readCSV:
-        cards.append((row[0], row[1], row[2]))
+        try:
+            cards.append((row[0], row[1], row[2]))
+        except:
+            print("Error on {0}. Will be dropped from Table".format(row[0]))
 #create copy of cards list to iterate through and not mess up for loop
 del cards[0]
 #sort for duplicates
@@ -138,10 +141,15 @@ for i, val in enumerate(cards):
         if float(price) > 0:
             result.append((name, qty, price))
             #if there's been a considerable change in price...
-            if float(price) > 1.5*float(old_price):
-                print("price spike on: {0}. From ${1} to ${2}".format(name, old_price, price))
-            if float(price) < 0.5*float(old_price):
-                print("price drop on: {0}. From ${1} to ${2}".format(name, old_price, price))
+            #different conditions if price is sub dollar
+            if float(old_price) > 1.0:
+                if float(price) > 1.15*float(old_price):
+                    print("price spike on: {0}: From ${1} to ${2}".format(name, old_price, price))
+                if float(price) < 0.85*float(old_price):
+                    print("price drop on: {0}: From ${1} to ${2}".format(name, old_price, price))
+            else:
+                if float(price) > 1.5*float(old_price):
+                    print("price spike on: {0}: From ${1} to ${2}".format(name, old_price, price))
         else:
             result.append((name, qty, old_price))
         #only add result to result name table if we're preventing duplicate searches
@@ -154,7 +162,7 @@ with open(out_file, "w") as csvfile:
     for card in result:
         #generate pricing info...
         if float(card[2]) > bulk_ceiling:
-            total_value += (float(card[2]) * int(card[1])) #price x qty
+            total_value += (float(card[2]) * int(card[1])) #price * qty
         else:
             bulk_count += int(card[1]) #qty
         writer.writerow([card[0], card[1], card[2]])
