@@ -14,7 +14,7 @@ result = [] #generated card list
 reprice = True
 condense = True
 #pricing info
-bulk_ceiling = 0.30
+bulk_ceiling = 0.99
 bulk_rate = 5 #x$/1000 bulk cards
 total_value = 0.0
 bulk_count = 0
@@ -155,6 +155,8 @@ for i, val in enumerate(cards):
         #only add result to result name table if we're preventing duplicate searches
         if condense:
             result_names.append(name)
+#sort prices from high to low
+result = sorted(result, key=lambda tup: float(tup[2]), reverse=True)
 #now print to csv
 with open(out_file, "w") as csvfile:
     writer = csv.writer(csvfile)
