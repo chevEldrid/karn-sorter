@@ -11,8 +11,8 @@ class bcolors:
     OKGREEN = '\033[92m'
     ENDC = '\033[0m'
 #
-card_file = "sample.csv"
-out_file = "sample.csv"
+card_file = ""
+out_file = ""
 cards = [] #name, qty, price
 result_names = [] #list of result card names
 result = [] #generated card list
@@ -25,7 +25,7 @@ bulk_rate = 5 #x$/1000 bulk cards
 total_value = 0.0
 bulk_count = 0
 min_delt = 1.00
-min_mod = 0.05
+min_mod = 0.10
 def is_float(word):
     temp = False
     try:
@@ -102,6 +102,16 @@ def get_name(card):
         name.append(word)
     return " ".join(name)
 #---------------------------
+#intake output file
+try:
+    with open(sys.argv[1]) as csvfile:
+        readCSV = csv.reader(csvfile, delimiter=',')
+        print(sys.argv[1] + " successfully read in")
+except:
+    print("ERROR: csv file could not be read. Please input name of csv as first arg")
+    sys.exit()
+card_file = sys.argv[1]
+out_file = sys.argv[1]
 #check for arg about repricing list
 if '-r' in sys.argv:
     reprice = False

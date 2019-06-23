@@ -8,7 +8,7 @@ Each picture is then cropped to include just the card title, sent to AWS for ima
 four scripts are currently included in this repo:
 sort_lookup.py -> runs the card reader doing the aws and scryfall calls (can be called with -f arguement to fetch only foil prices)
 cam_setup.py -> takes multiple photos with various croppings to see which includes card's entire title block
-clear_lists.py -> clears local pictures and cards.txt, which stores the card names of cards scanned
+clear_lists.py -> clears local pictures and any .txt or .csv you want to generate
 update_csv.py -> runs on output of sort_lookup to condense multiple copies of same card and update card prices according to scryfall (can be called with -r, no new prices, or -p, no duplicate condensing)
 
 [Project Page](https://www.hackster.io/chev-eldrid/magic-the-gathering-card-pricer-a5e819)

@@ -1,8 +1,9 @@
 import sys
 import os
 import csv
-card_lists = ["cards.txt"]
+#card_lists = ["cards.txt"]
 #card_sheets = ["mtgcards.csv"]
+card_lists = []
 card_sheets = []
 PRG_PATH = "/home/pi/karn-sorter"
 FOLDER = "test"

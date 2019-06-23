@@ -226,9 +226,6 @@ while True:
         #if price > 0, means card was found - so we can be more confident on name too
         #increase count of total cards scanned
         total_cards += 1
-        #add card name to stored names file
-        with open("cards.txt", "a") as myfile:
-            myfile.write(card+"\n")
         #adds prices and names to a csv
         with open("mtgcards.csv", "a") as myfile:
             writer = csv.writer(myfile)
@@ -256,8 +253,6 @@ while True:
         str_value = ("%.2f" % total_value)
         str_sell = ("%.2f" % (total_value * 2 / 3))
         #show end of section in files...
-        with open("cards.txt", "a") as myfile:
-            myfile.write("==================\n")
         print("Total value of cards scanned is ${0}".format(str_value))
         print("Approx sell value of cards scanned is ${0}".format(str_sell))
         success_ratio = float(total_failures)/float(total_cards)*100
