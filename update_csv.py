@@ -5,8 +5,14 @@ import json
 import time
 #command line arguments: [-r] - just consolidate, no price pulling
 #                        [-p] - just price, don't consolidate
-card_file = "mtgcards.csv"
-out_file = "mtgcards.csv"
+#Ascii codes for colored ouput
+class bcolors:
+    FAIL = '\033[91m'
+    OKGREEN = '\033[92m'
+    ENDC = '\033[0m'
+#
+card_file = "sample.csv"
+out_file = "sample.csv"
 cards = [] #name, qty, price
 result_names = [] #list of result card names
 result = [] #generated card list
@@ -18,7 +24,8 @@ bulk_ceiling = 0.99
 bulk_rate = 5 #x$/1000 bulk cards
 total_value = 0.0
 bulk_count = 0
-
+min_delt = 1.00
+min_mod = 0.05
 def is_float(word):
     temp = False
     try:
@@ -142,14 +149,12 @@ for i, val in enumerate(cards):
             result.append((name, qty, price))
             #if there's been a considerable change in price...
             #different conditions if price is sub dollar
-            if float(old_price) > 1.0:
-                if float(price) > 1.15*float(old_price):
-                    print("price spike on: {0}: From ${1} to ${2}".format(name, old_price, price))
-                if float(price) < 0.85*float(old_price):
-                    print("price drop on: {0}: From ${1} to ${2}".format(name, old_price, price))
-            else:
-                if float(price) > 1.5*float(old_price):
-                    print("price spike on: {0}: From ${1} to ${2}".format(name, old_price, price))
+            delta = abs(float(price) - float(old_price))
+            min_reached = delta > min_delt
+            if min_reached and float(price) >= (1.0 + min_mod) * float(old_price):
+                print(bcolors.OKGREEN+"Spike"+bcolors.ENDC+" on: {0}: From ${1} to ${2}".format(name, old_price, price))
+            if min_reached and float(price) <= (1.0 - min_mod) * float(old_price):
+                print(bcolors.FAIL+"Drop"+bcolors.ENDC+" on: {0}: From ${1} to ${2}".format(name, old_price, price))
         else:
             result.append((name, qty, old_price))
         #only add result to result name table if we're preventing duplicate searches
