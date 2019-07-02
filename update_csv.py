@@ -63,7 +63,9 @@ def get_price(card, foil, set_code):
     card_name = get_name(card)
     try:
         url = "https://api.scryfall.com/cards/search?q=!\"{0}\"&order={1}&unique=prints".format(card_name, "name")
+        #print(url)
         r = requests.get(url)
+        #print("request got")
         x = json.loads(r.text)
         #pass foil flag to cheapest print
         price = cheapest_print(x, foil, set_code)
@@ -132,6 +134,7 @@ with open(card_file) as csvfile:
     for row in readCSV:
         try:
             cards.append((row[0], row[1], row[2]))
+            #print(row)
         except:
             print("Error on {0}. Will be dropped from Table".format(row[0]))
 #create copy of cards list to iterate through and not mess up for loop
