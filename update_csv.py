@@ -45,6 +45,11 @@ def cheapest_print(cardData, foil, set_code):
             cardPrice = price["prices"]["usd_foil"]
         else:
             cardPrice = price["prices"]["usd"]
+        #special filters
+        if price["oversized"] == True:
+            continue
+        if price["set_type"] == "memorabilia":
+            continue
         #if card has no usd price, it might only have a foil price
         if not is_float(cardPrice):
             cardPrice = price["prices"]["usd_foil"]
