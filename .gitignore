@@ -4,7 +4,7 @@ test/
 crops/
 #ignore generated card list
 mtgcards.csv
-cardlist.csv
-buylist.csv
+bulkcards.csv
 sample.csv
-shipped.csv
+staples.csv
+sample_bulk.csv
