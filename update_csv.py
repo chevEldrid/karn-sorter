@@ -19,6 +19,7 @@ result = [] #generated card list
 #argv stuff
 reprice = True
 condense = True
+logCards = False
 #pricing info
 bulk_ceiling = 0.99
 bulk_rate = 5 #x$/1000 bulk cards
@@ -66,6 +67,8 @@ def cheapest_print(cardData, foil, set_code):
 def get_price(card, foil, set_code):
     price = -1
     card_name = get_name(card)
+    if logCards:
+        print(str(card_name)+":- GET PRICE")
     try:
         url = "https://api.scryfall.com/cards/search?q=!\"{0}\"&order={1}&unique=prints".format(card_name, "name")
         #print(url)
@@ -73,10 +76,12 @@ def get_price(card, foil, set_code):
         #print("request got")
         x = json.loads(r.text)
         #pass foil flag to cheapest print
+        if logCards:
+            print(str(card_name)+":- GET CHEAPEST")
         price = cheapest_print(x, foil, set_code)
     except:
         print("ERROR ON: " + card)
-    time.sleep(.1)
+    time.sleep(.15)
     return price
 
 #given card name, is the card foil
@@ -131,7 +136,9 @@ if '-p' in sys.argv:
     print("Will not check for consolidation")
 else:
     print("Will consolidate all duplicates")
-
+if '-l' in sys.argv:
+    logCards = True
+    print("Will print more information about processes")
 
 #bring in file with all card information...
 with open(card_file) as csvfile:

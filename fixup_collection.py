@@ -26,7 +26,7 @@ def read_file(file):
 def sort_list(card_list):
 	for i, val in enumerate(card_list):
 	    name = val[0]
-	    qty = int(val[1])
+	    qty = val[1]
 	    price = float(val[2])
 	    #if the card hasn't already been found...
 	    if price > BULK_CEILING:
@@ -47,7 +47,7 @@ try:
         print(sys.argv[1] + " successfully read in, value will be stored here.")
     with open(sys.argv[2]) as csvfile:
         readCSV = csv.reader(csvfile, delimiter=',')
-        print(sys.argv[2] + " successfully read in, bulk will be stored here".)
+        print(sys.argv[2] + " successfully read in, bulk will be stored here.")
 except:
     print("ERROR: csv files could not be read. Please input names of csvs as first and second arg")
     sys.exit()
