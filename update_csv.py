@@ -37,9 +37,10 @@ def is_float(word):
     return temp
 
 #given scryfall api card data, finds paper printing with cheapest price
-def cheapest_print(cardData, foil, set_code):
+def cheapest_print(cardData, foil, set_code, col_number):
     printings = cardData["data"]
     prices = []
+    #print("col_number selected: "+col_number)
     for price in printings:
         #if foil flag, use foil price
         if foil:
@@ -55,16 +56,25 @@ def cheapest_print(cardData, foil, set_code):
         if not is_float(cardPrice):
             cardPrice = price["prices"]["usd_foil"]
         if cardPrice != None:
-            #if specific set wanted, checked here
+            #if specific collector numnber wanted
+            col_num_cleared = False
+            if col_number == 0:
+                col_num_cleared = True
+            elif int(price["collector_number"]) == col_number:
+                col_num_cleared = True
+            #if specific set wanted...
+            set_cleared = False
             if set_code == "":
+                set_cleared = True
+            elif price["set"].upper() == set_code.upper():
+                set_cleared = True
+            #checks if specific conditions met
+            if set_cleared and col_num_cleared:
                 prices.append(float(cardPrice))
-            else:
-                if price["set"].upper() == set_code.upper():
-                    prices.append(float(cardPrice))
     return min(prices)
 
 #given card name, pings scryfall for card data
-def get_price(card, foil, set_code):
+def get_price(card, foil, set_code, col_number):
     price = -1
     card_name = get_name(card)
     if logCards:
@@ -78,7 +88,7 @@ def get_price(card, foil, set_code):
         #pass foil flag to cheapest print
         if logCards:
             print(str(card_name)+":- GET CHEAPEST")
-        price = cheapest_print(x, foil, set_code)
+        price = cheapest_print(x, foil, set_code, col_number)
     except:
         print("ERROR ON: " + card)
     time.sleep(.15)
@@ -100,6 +110,14 @@ def get_set_code(card):
             return word[1:-1]
     return ""
 
+#given card name, gets collectors number
+def get_collector_number(card):
+    words = card.split()
+    for word in words:
+        if "{" in word:
+            return int(word[1:-1])
+    return 0
+
 #removes tags given to card name on sheet
 def get_name(card):
     words = card.split()
@@ -110,6 +128,9 @@ def get_name(card):
             continue
         #if card has set code in the form [kld]...
         if "[" in word:
+            continue
+        #if card had collectors number in form {126}...
+        if "{" in word:
             continue
         name.append(word)
     return " ".join(name)
@@ -161,7 +182,8 @@ for i, val in enumerate(cards):
         if reprice:
             foil = is_foil(name)
             set_code = get_set_code(name)
-            price = get_price(name, foil, set_code)
+            collector_number = get_collector_number(name)
+            price = get_price(name, foil, set_code, collector_number)
         else:
             price = val[2]
         #iterate through every remaining entry in table, if condensing
@@ -177,9 +199,9 @@ for i, val in enumerate(cards):
             delta = abs(float(price) - float(old_price))
             min_reached = delta > min_delt
             if min_reached and float(price) >= (1.0 + min_mod) * float(old_price):
-                print(bcolors.OKGREEN+"Spike"+bcolors.ENDC+" on: {0}: From ${1} to ${2}".format(name, old_price, price))
+                print(bcolors.OKGREEN+"Spike"+bcolors.ENDC+" on: {0}: From ${1} to ${2} (You have {3})".format(name, old_price, price, qty))
             if min_reached and float(price) <= (1.0 - min_mod) * float(old_price):
-                print(bcolors.FAIL+"Drop"+bcolors.ENDC+" on: {0}: From ${1} to ${2}".format(name, old_price, price))
+                print(bcolors.FAIL+"Drop"+bcolors.ENDC+" on: {0}: From ${1} to ${2} (You have {3})".format(name, old_price, price, qty))
         else:
             result.append((name, qty, old_price))
         #only add result to result name table if we're preventing duplicate searches
